@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Upload an object to an S3 bucket, triggering a Lambda event, returning the object key as a Stack Output.
+Parameters:
+  Body:
+    Description: S3 Object body content
+    Type: String
+    Default: TEST CONTENT
+  BucketName:
+    Description: S3 Bucket name
+    Type: String
+    Default: notification-sink-bucket
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal: 
+            Service: lambda.amazonaws.com
+          Action: 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: S3Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - 's3:PutObject'
+            - 'S3:DeleteObject'
+            Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+
+  Subscriber:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Prints the filename
+      Handler: event_subscriber.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code: .
+      Runtime: nodejs12.x
+      Environment:
+        Variables:
+          BucketName:
+            Ref: BucketName
+# Outputs:
+#   ImageProcessingARN:
+#     Description: ARN of the function
+#     Value: 
+#       Fn::Sub: ${ImageProcessor.Arn}
+#     Export:
+#       Name: ImageProcessingARN
+#   ImageProcessingName:
+#     Description: Name of the function
+#     Value: !Ref ImageProcessor
+#     Export:
+#       Name: ImageProcessingName
+
+
+  # Outputs:
+  # AuthorizeArn:
+  #   Description: ARN of authorize
+  #   Value:
+  #     Fn::Sub: ${Authorize.Arn}
+  #   Export:
+  #     Name:
+  #       Fn::Sub: ${Environment}-AuthorizeArn
+
+  Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn: BucketPermission
+    Properties:
+      BucketName: !Ref BucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+        - Event: 's3:ObjectCreated:*'
+          Function: !GetAtt Subscriber.Arn
+
+  BucketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref Subscriber
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref "AWS::AccountId"
+      SourceArn: !Sub "arn:aws:s3:::${BucketName}"
+
+
