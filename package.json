@@ -1,4 +1,10 @@
 {
+  "name": "purchage-process-events",
+  "version": "1.0.0",
+  "description": "Demo S3 bucket eventsgit and lambda",
+  "author": "",
+  "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.696.0"
   }
 }

@@ -1,8 +1,8 @@
-exports.handler = (event, callback, context) => {
+exports.handler = (event, context, callback) => {
     try {
         var records = event['Records']
         if (records === undefined || records === null)
-            callback(null, { success: false, message: "Empty data." })
+            callback(null, { success: false, message: "Data is empty." })
 
         var { eventSource, eventName, eventSource, s3: { bucket: { name: name }, object: { key: key } } } = records[0]
         console.log({

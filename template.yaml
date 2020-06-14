@@ -1,17 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Upload an object to an S3 bucket, triggering a Lambda event, returning the object key as a Stack Output.
+Description: A demo S3 bucket notification system.
 Parameters:
-  Body:
-    Description: S3 Object body content
-    Type: String
-    Default: TEST CONTENT
   BucketName:
     Description: S3 Bucket name
     Type: String
-    Default: notification-sink-bucket
+    Default: item-purchase-store
 
 Resources:
-  LambdaExecutionRole:
+  PurchaseProcessRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -35,40 +31,27 @@ Resources:
             - 'S3:DeleteObject'
             Resource: !Sub "arn:aws:s3:::${BucketName}/*"
 
-  Subscriber:
+  PurchaseProcess:
     Type: AWS::Lambda::Function
     Properties:
-      Description: Prints the filename
-      Handler: event_subscriber.handler
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Code: .
+      Description: Function that is called after file is written in S3 bucket.
+      Handler: purchase_process.handler
       Runtime: nodejs12.x
+      Role: !GetAtt PurchaseProcessRole.Arn
+      Code: .
+    
+  PurchaseDataInput:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Function that takes in the customer info and writes into S3 bucket.
+      Handler: purchase_input.handler
+      Runtime: nodejs12.x
+      Role: !GetAtt PurchaseProcessRole.Arn
+      Code: .
       Environment:
         Variables:
           BucketName:
             Ref: BucketName
-# Outputs:
-#   ImageProcessingARN:
-#     Description: ARN of the function
-#     Value: 
-#       Fn::Sub: ${ImageProcessor.Arn}
-#     Export:
-#       Name: ImageProcessingARN
-#   ImageProcessingName:
-#     Description: Name of the function
-#     Value: !Ref ImageProcessor
-#     Export:
-#       Name: ImageProcessingName
-
-
-  # Outputs:
-  # AuthorizeArn:
-  #   Description: ARN of authorize
-  #   Value:
-  #     Fn::Sub: ${Authorize.Arn}
-  #   Export:
-  #     Name:
-  #       Fn::Sub: ${Environment}-AuthorizeArn
 
   Bucket:
     Type: AWS::S3::Bucket
@@ -78,15 +61,13 @@ Resources:
       NotificationConfiguration:
         LambdaConfigurations:
         - Event: 's3:ObjectCreated:*'
-          Function: !GetAtt Subscriber.Arn
+          Function: !GetAtt PurchaseProcess.Arn
 
   BucketPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
-      FunctionName: !Ref Subscriber
+      FunctionName: !Ref PurchaseProcess
       Principal: s3.amazonaws.com
       SourceAccount: !Ref "AWS::AccountId"
       SourceArn: !Sub "arn:aws:s3:::${BucketName}"
-
-

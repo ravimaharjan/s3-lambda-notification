@@ -1,1 +1,4 @@
 /node_modules
+/event.json
+/purchase_template_output.yaml
+response.json
