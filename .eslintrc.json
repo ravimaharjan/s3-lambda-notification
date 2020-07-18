@@ -1,0 +1,20 @@
+{
+    "env": {
+        "browser": true,
+        "commonjs": true,
+        "es2020": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 11
+    },
+    "rules": {
+        "semi":"off",
+        "eqeqeq": "warn",
+        "curly": "error",
+        "indent": ["error", 4],
+        "no-trailing-spaces": "off",
+        "padded-blocks": "off",
+        "quotes": ["error", "single"]
+    }
+}

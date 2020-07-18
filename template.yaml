@@ -1,13 +1,22 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Lambda application that calls the Lambda API.
+
+AWSTemplateFormatVersion: '2010-09-09'
 Description: A demo S3 bucket notification system.
 Parameters:
   BucketName:
     Description: S3 Bucket name
     Type: String
-    Default: item-purchase-store
+    Default: item-store  
+  Region:
+    Description: Region
+    Type: String
+    Default: ap-southeast-2
 
 Resources:
-  PurchaseProcessRole:
+
+  PurchaseInputRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -31,7 +40,47 @@ Resources:
             - 'S3:DeleteObject'
             Resource: !Sub "arn:aws:s3:::${BucketName}/*"
 
-  PurchaseProcess:
+  
+  PurchaseProcessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal: 
+            Service: lambda.amazonaws.com
+          Action: 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: SESPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "ses:SendEmail"
+            - "ses:SendRawEmail"
+            Resource: "*"
+      - PolicyName: ReadPurchasePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+
+  api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: api
+      TracingEnabled: true
+      OpenApiVersion: 3.0.2
+
+  PurchaseDataProcess:
     Type: AWS::Lambda::Function
     Properties:
       Description: Function that is called after file is written in S3 bucket.
@@ -39,15 +88,27 @@ Resources:
       Runtime: nodejs12.x
       Role: !GetAtt PurchaseProcessRole.Arn
       Code: .
+      Timeout: 10
     
   PurchaseDataInput:
-    Type: AWS::Lambda::Function
+    Type: AWS::Serverless::Function
     Properties:
       Description: Function that takes in the customer info and writes into S3 bucket.
       Handler: purchase_input.handler
       Runtime: nodejs12.x
-      Role: !GetAtt PurchaseProcessRole.Arn
-      Code: .
+      Role: !GetAtt PurchaseInputRole.Arn
+      CodeUri: .
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaReadOnlyAccess
+      Events:
+        Input:
+          Type: Api
+          Properties:
+            RestApiId: !Ref api
+            Path: /purchase
+            Method: POST 
+
       Environment:
         Variables:
           BucketName:
@@ -61,13 +122,13 @@ Resources:
       NotificationConfiguration:
         LambdaConfigurations:
         - Event: 's3:ObjectCreated:*'
-          Function: !GetAtt PurchaseProcess.Arn
+          Function: !GetAtt PurchaseDataProcess.Arn
 
   BucketPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
-      FunctionName: !Ref PurchaseProcess
+      FunctionName: !Ref PurchaseDataProcess
       Principal: s3.amazonaws.com
       SourceAccount: !Ref "AWS::AccountId"
       SourceArn: !Sub "arn:aws:s3:::${BucketName}"

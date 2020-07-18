@@ -1,0 +1,10 @@
+{
+    "purchaseInfo": {
+        "Name": "User1",
+        "Address": "NewZealand",
+        "Mobile": "11223344",
+        "Item": "bottle",
+        "quantity": 20,
+        "rate": 100
+    }
+}
