@@ -1,9 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: An AWS Lambda application that calls the Lambda API.
-
+Description: S3 notification system.
 AWSTemplateFormatVersion: '2010-09-09'
-Description: A demo S3 bucket notification system.
 Parameters:
   BucketName:
     Description: S3 Bucket name
@@ -13,6 +11,10 @@ Parameters:
     Description: Region
     Type: String
     Default: ap-southeast-2
+  SenderEmail:
+    Description: Email Address of the sender
+    Type: String
+    Default: Verified@test.com
 
 Resources:
 
@@ -37,7 +39,6 @@ Resources:
           - Effect: Allow
             Action:
             - 's3:PutObject'
-            - 'S3:DeleteObject'
             Resource: !Sub "arn:aws:s3:::${BucketName}/*"
 
   
@@ -62,7 +63,6 @@ Resources:
           - Effect: Allow
             Action:
             - "ses:SendEmail"
-            - "ses:SendRawEmail"
             Resource: "*"
       - PolicyName: ReadPurchasePolicy
         PolicyDocument:
@@ -89,6 +89,9 @@ Resources:
       Role: !GetAtt PurchaseProcessRole.Arn
       Code: .
       Timeout: 10
+      Environment:
+        Variables:
+          SenderEmail: !Ref SenderEmail
     
   PurchaseDataInput:
     Type: AWS::Serverless::Function

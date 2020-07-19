@@ -68,7 +68,7 @@ const getEmailParams = (purchaseData) => {
     const params = {
         Destination: {
             ToAddresses: [
-                'verified email address',
+                purchaseData.Email,
             ]
         },
         Message: {
@@ -102,7 +102,7 @@ const getEmailParams = (purchaseData) => {
                 Data: 'Purchase Information'
             }
         },
-        Source: 'verified email address'
+        Source: process.env.SenderEmail
     }
     return params
 }

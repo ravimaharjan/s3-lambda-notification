@@ -41,6 +41,7 @@ function uploadPurchaseData(bucketName, requestId, purchaseInfo) {
 
         const purchaseInputData = {
             Name: purchaseInfo.Name,
+            Email: purchaseInfo.Email,
             Address: purchaseInfo.Address,
             Mobile: purchaseInfo.Mobile,
             Item: purchaseInfo.Item,

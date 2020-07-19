@@ -1,6 +1,7 @@
 {
     "purchaseInfo": {
-        "Name": "User1",
+        "Name": "Sunday",
+        "Email": "verifiedemail",
         "Address": "NewZealand",
         "Mobile": "11223344",
         "Item": "bottle",
