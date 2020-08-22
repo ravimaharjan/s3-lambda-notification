@@ -1,6 +1,7 @@
 
 # AWS S3 NotificationConfiguration
 
+
 S3 bucket provides a notification feature which let’s you receive notification when certain events occur. Some of the common events supported by buckets are objectCreated, objectDeleted, objectRestore. In this example we will create a customer purchase notification system. For this, we will send Http post request to the AWS Apigateway which will be proxied to the Lambda backend. The Lambda function will store the customer data in the S3 bucket in JSON file. This will trigger the second Lambda function which will read the JSON file in the S3 bucket and send the email to the desired email address.
 
 
@@ -31,3 +32,5 @@ From the terminal run the commands.
 ./deploy.sh
 ./callapi.sh
 ```
+
+More detail is available in the link https://dev.to/ravimaharjan/aws-s3-bucket-notification-system-1lkh
